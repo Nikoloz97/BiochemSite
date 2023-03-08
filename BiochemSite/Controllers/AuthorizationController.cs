@@ -2,11 +2,12 @@
 
 namespace BiochemSite.Controllers
 {
-    public class AuthorizationController : Controller
+    [ApiController]
+    public class AuthorizationController : ControllerBase
     {
-        public IActionResult Index()
+       /* public IActionResult Index()
         {
             return View();
-        }
+        }*/
     }
 }

@@ -1,21 +1,42 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using BiochemSite.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BiochemSite.Controllers
 {
     [ApiController]
+    [Route("api/[controller]")]
     public class ContentController : ControllerBase
     {
-        public JsonResult GetChapterContent()
+        [HttpGet]
+        public ActionResult<ContentDto> GetAllChapters()
         {
-            new JsonResult(
-                new List<object>
-                {
-                    new {id = 1, ChapterNum = 1, SubChapNum = 1 ChapDesc = "Introduction to essential Amino acids"},
-                    new {id = 2,ChapterNum = 1, SubChapNum = 2, ChapDesc = "Learning "},
-                    new {id = 3, ChapterNum = 2,SubChapNum = 1, ChapDesc = },
-                    new {id = 4, ChapterNum = 2,SubChapNum = 2, ChapDesc = }
-                })
+            var Chapters = ContentDataStore.Instance.Contents;
+            return Ok(Chapters);
         }
+
+        [HttpGet("{chapterNum}")]
+        public ActionResult<ContentDto> GetChapter(int chapterNum)
+        {
+            var subChapters = ContentDataStore.Instance.Contents.Where(c => c.ChapterNum == chapterNum).ToList();
+            if (subChapters.Count == 0)
+            {
+                return NotFound();
+            }
+            return Ok(subChapters);
+        }
+
+        [HttpGet("{chapterNum}/{subchapternum}")]
+        public ActionResult<ContentDto> GetSubchapter(int chapterNum, int subchapternum)
+        {
+            var subChapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => c.ChapterNum == chapterNum && c.SubChapterNum == subchapternum);
+            if (subChapter == null)
+            {
+                return NotFound();
+            }
+            return Ok(subChapter);
+
+        }
+
 
     }
 }
