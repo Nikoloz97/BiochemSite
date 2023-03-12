@@ -5,9 +5,9 @@ namespace BiochemSite.Controllers
     [ApiController]
     public class StatusExamController : ControllerBase
     {
-     /*   public IActionResult Index()
+        public IActionResult Index()
         {
             return View();
-        }*/
+        }
     }
 }
