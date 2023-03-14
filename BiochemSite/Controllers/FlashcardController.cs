@@ -17,25 +17,20 @@ namespace BiochemSite.Controllers
             return Ok(allDecks);
         }
 
-        // Use: Decks for specific chapter
+        // Use: Deck for specific chapter
         [HttpGet("{chapterNum}")]
-        public ActionResult<IEnumerable<FlashcardDto>> GetChapterDecks (int chapterNum)
+        public ActionResult<IEnumerable<FlashcardDto>> GetChapterDeck (int chapterNum)
         {
-            var chapterDecks = FlashcardDataStore.Instance.Flashcards.Where(fc => fc.ChapterNum == chapterNum);
+            var chapterDeck = FlashcardDataStore.Instance.Flashcards.Where(fc => fc.ChapterNum == chapterNum);
  
-            return Ok(chapterDecks);
+            return Ok(chapterDeck);
         }
 
         // Use: Deck for a subchapter
         [HttpGet("{chapterNum}/{subchapterNum}")]
-        public ActionResult<FlashcardDto> GetSubchapterDeck(int chapterNum, int subchapterNum)
+        public ActionResult<IEnumerable<FlashcardDto>> GetSubchapterDeck(int chapterNum, int subchapterNum)
         {
             var subchapterDeck = FlashcardDataStore.Instance.Flashcards.Where(fc => (fc.ChapterNum== chapterNum) && (fc.SubchapterNum == subchapterNum));
-
-            if (subchapterDeck == null)
-            {
-                return NotFound();
-            }
 
             return Ok(subchapterDeck);
         }

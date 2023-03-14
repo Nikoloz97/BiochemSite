@@ -26,7 +26,7 @@ namespace BiochemSite.Controllers
 
         // Use: random status question for a chapter
         [HttpGet("Random/{ChapterNum}")]
-        public ActionResult<IEnumerable<StatusQuestionDto>> GetRandomChapterSQ(int chapterNum)
+        public ActionResult<StatusQuestionDto> GetRandomChapterSQ(int chapterNum)
         {
             var chapterSQs = StatusQuestionStore.Instance.StatusQuestions.Where(SQ => SQ.ChapterNum == chapterNum).ToList();
             var random = new Random();
@@ -51,7 +51,7 @@ namespace BiochemSite.Controllers
         // TODO: Test this function on Postman
         // Use: random status question for a subchapter
         [HttpGet("Random/{ChapterNum}/{SubchapterNum}")]
-        public ActionResult<IEnumerable<StatusQuestionDto>> GetRandomSubchapterSQ(int chapterNum, int subChapterNum)
+        public ActionResult<StatusQuestionDto> GetRandomSubchapterSQ(int chapterNum, int subChapterNum)
         {
             var subchapterSQs = StatusQuestionStore.Instance.StatusQuestions.Where(SQ => SQ.ChapterNum == chapterNum && SQ.SubchapterNum == subChapterNum).ToList();
             var random = new Random();
