@@ -7,25 +7,63 @@ namespace BiochemSite.Controllers
     [Route("api/[controller]")]
     public class StatusExamController : ControllerBase
     {
+        // Use: all status questions
         [HttpGet]
-        public ActionResult<StatusQuestionDto> GetAllSQs()
+        public ActionResult<IEnumerable<StatusQuestionDto>> GetAllSQs()
         {
             var allSQs = StatusQuestionStore.Instance.StatusQuestions;
             return Ok(allSQs);
         }
 
+        // Use: status questions for a chapter
         [HttpGet("{ChapterNum}")]
-        public ActionResult<StatusQuestionDto> GetChapterSQs(int chapterNum)
+        public ActionResult<IEnumerable<StatusQuestionDto>> GetChapterSQs(int chapterNum)
         {
             var chapterSQs = StatusQuestionStore.Instance.StatusQuestions.Where(SQ => SQ.ChapterNum == chapterNum);
             return Ok(chapterSQs);
         }
+     
 
-        [HttpGet("{ChapterNum}/{SubchapterNum]")]
-        public ActionResult<StatusQuestionDto> GetSubchapterSQs(int chapterNum, int subChapterNum)
+        // Use: random status question for a chapter
+        [HttpGet("{ChapterNum}/Random")]
+        public ActionResult<IEnumerable<StatusQuestionDto>> GetRandomChapterSQ(int chapterNum)
+        {
+            var chapterSQs = StatusQuestionStore.Instance.StatusQuestions.Where(SQ => SQ.ChapterNum == chapterNum).ToList();
+            var random = new Random();
+            int randomIndex = random.Next(chapterSQs.Count);
+            var chapterSQ = chapterSQs[randomIndex];
+
+            if (chapterSQ == null)
+            {
+                return NotFound();
+            }
+            return Ok(chapterSQ);
+        }
+
+        // Use: status questions for a subchapter
+        [HttpGet("{ChapterNum}/{SubchapterNum}")]
+        public ActionResult<IEnumerable<StatusQuestionDto>> GetSubchapterSQs(int chapterNum, int subChapterNum)
         {
             var subchapterSQs = StatusQuestionStore.Instance.StatusQuestions.Where(SQ => SQ.ChapterNum == chapterNum && SQ.SubchapterNum == subChapterNum);
             return Ok(subchapterSQs);
         }
+
+        // TODO: Test this function on Postman
+        // Use: random status question for a subchapter
+        [HttpGet("{ChapterNum}/{SubchapterNum}/Random")]
+        public ActionResult<IEnumerable<StatusQuestionDto>> GetRandomSubchapterSQ(int chapterNum, int subChapterNum)
+        {
+            var subchapterSQs = StatusQuestionStore.Instance.StatusQuestions.Where(SQ => SQ.ChapterNum == chapterNum && SQ.SubchapterNum == subChapterNum).ToList();
+            var random = new Random();
+            int randomIndex = random.Next(subchapterSQs.Count);
+            var subchapterSQ = subchapterSQs[randomIndex];
+
+            if (subchapterSQ == null)
+            {
+                return NotFound();
+            }
+            return Ok(subchapterSQ);
+        }
+
     }
 }

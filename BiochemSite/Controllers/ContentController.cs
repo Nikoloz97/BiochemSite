@@ -7,28 +7,34 @@ namespace BiochemSite.Controllers
     [Route("api/[controller]")]
     public class ContentController : ControllerBase
     {
-        // Uses: chapters sidebar
+        // Use: All content
         [HttpGet]
-        public ActionResult<ContentDto> GetAllChapters()
+        public ActionResult<IEnumerable<ContentDto>> GetAllContent()
         {
-            var Chapters = ContentDataStore.Instance.Contents;
-            return Ok(Chapters);
+            var allContent = ContentDataStore.Instance.Contents;
+            return Ok(allContent);
         }
 
-        // Uses: content for specific chapter
+        // Use: Content for a chapter
         [HttpGet("{chapterNum}")]
-        public ActionResult<ContentDto> GetSubChapters(int chapterNum)
+        public ActionResult<IEnumerable<ContentDto>> GetChapterContent(int chapterNum)
         {
-            var subChapters = ContentDataStore.Instance.Contents.Where(c => c.ChapterNum == chapterNum).ToList();
-            if (subChapters.Count == 0)
+            var chapterContent = ContentDataStore.Instance.Contents.Where(c => c.ChapterNum == chapterNum);
+
+            return Ok(chapterContent);
+        }
+
+        // Use: Content for a subchapter
+        [HttpGet("{chapterNum}/{subChapterNum}")]
+        public ActionResult<ContentDto> GetSubchapterContent(int chapterNum, int subchapterNum)
+        {
+            var subchapterContent = ContentDataStore.Instance.Contents.FirstOrDefault(c => (c.ChapterNum == chapterNum) && (c.SubChapterNum == subchapterNum));
+            if (subchapterContent == null)
             {
                 return NotFound();
             }
-            return Ok(subChapters);
+
+            return Ok(subchapterContent);
         }
-
-        
-
-
     }
 }

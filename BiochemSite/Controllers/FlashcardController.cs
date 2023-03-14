@@ -3,35 +3,41 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BiochemSite.Controllers
 {
+    // Setup: each subchapter contains an individual deck
     [ApiController]
     [Route("api/[controller]")]
     public class FlashCardController : Controller
     {
-        // Use: get flashcards for entire chapter
+        // Use: All decks
         [HttpGet("{chapterNum}")]
-        public ActionResult<FlashcardDto> GetChapterDeck(int chapterNum)
+        public ActionResult<IEnumerable<FlashcardDto>> GetAllDecks()
         {
-            var deckToReturn = FlashcardDataStore.Instance.Flashcards.Where(fc => fc.ChapterNum== chapterNum).ToList();
-            if (deckToReturn.Count == 0)
-            {
-                return NotFound();
-            }
-            return Ok(deckToReturn);
+            var allDecks = FlashcardDataStore.Instance.Flashcards;
+
+            return Ok(allDecks);
+        }
+        // Use: Decks for specific chapter
+        [HttpGet("{chapterNum}")]
+        public ActionResult<IEnumerable<FlashcardDto>> GetChapterDecks (int chapterNum)
+        {
+            var chapterDecks = FlashcardDataStore.Instance.Flashcards.Where(fc => fc.ChapterNum == chapterNum);
+ 
+            return Ok(chapterDecks);
         }
 
-        // Use: get flashcards for specific subchapter
+        // Use: Deck for a subchapter
         [HttpGet("{chapterNum}/{subchapterNum}")]
         public ActionResult<FlashcardDto> GetSubchapterDeck(int chapterNum, int subchapterNum)
         {
-            var subchapterDeckToReturn = FlashcardDataStore.Instance.Flashcards.Where(fc => (fc.ChapterNum== chapterNum) && (fc.SubchapterNum == subchapterNum)).ToList();
-            if (subchapterDeckToReturn.Count == 0)
+            var subchapterDeck = FlashcardDataStore.Instance.Flashcards.Where(fc => (fc.ChapterNum== chapterNum) && (fc.SubchapterNum == subchapterNum));
+
+            if (subchapterDeck == null)
             {
                 return NotFound();
             }
-            return Ok(subchapterDeckToReturn);
+
+            return Ok(subchapterDeck);
         }
-
-
 
 
 
