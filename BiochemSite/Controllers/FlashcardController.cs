@@ -9,13 +9,14 @@ namespace BiochemSite.Controllers
     public class FlashCardController : Controller
     {
         // Use: All decks
-        [HttpGet("{chapterNum}")]
+        [HttpGet]
         public ActionResult<IEnumerable<FlashcardDto>> GetAllDecks()
         {
             var allDecks = FlashcardDataStore.Instance.Flashcards;
 
             return Ok(allDecks);
         }
+
         // Use: Decks for specific chapter
         [HttpGet("{chapterNum}")]
         public ActionResult<IEnumerable<FlashcardDto>> GetChapterDecks (int chapterNum)
