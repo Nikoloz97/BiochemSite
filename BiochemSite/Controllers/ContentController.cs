@@ -7,6 +7,7 @@ namespace BiochemSite.Controllers
     [Route("api/[controller]")]
     public class ContentController : ControllerBase
     {
+        // Uses: chapters sidebar
         [HttpGet]
         public ActionResult<ContentDto> GetAllChapters()
         {
@@ -14,6 +15,7 @@ namespace BiochemSite.Controllers
             return Ok(Chapters);
         }
 
+        // Uses: content for specific chapter
         [HttpGet("{chapterNum}")]
         public ActionResult<ContentDto> GetSubChapters(int chapterNum)
         {
