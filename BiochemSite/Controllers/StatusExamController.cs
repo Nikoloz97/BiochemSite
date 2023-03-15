@@ -22,10 +22,10 @@ namespace BiochemSite.Controllers
             var chapterSQs = StatusQuestionStore.Instance.StatusQuestions.Where(SQ => SQ.ChapterNum == chapterNum);
             return Ok(chapterSQs);
         }
-     
+
 
         // Use: random status question for a chapter
-        [HttpGet("Random/{ChapterNum}")]
+        [HttpGet("{ChapterNum}/Random")]
         public ActionResult<StatusQuestionDto> GetRandomChapterSQ(int chapterNum)
         {
             var chapterSQs = StatusQuestionStore.Instance.StatusQuestions.Where(SQ => SQ.ChapterNum == chapterNum).ToList();
@@ -48,9 +48,8 @@ namespace BiochemSite.Controllers
             return Ok(subchapterSQs);
         }
 
-        // TODO: Test this function on Postman
         // Use: random status question for a subchapter
-        [HttpGet("Random/{ChapterNum}/{SubchapterNum}")]
+        [HttpGet("{ChapterNum}/{SubchapterNum}/Random")]
         public ActionResult<StatusQuestionDto> GetRandomSubchapterSQ(int chapterNum, int subChapterNum)
         {
             var subchapterSQs = StatusQuestionStore.Instance.StatusQuestions.Where(SQ => SQ.ChapterNum == chapterNum && SQ.SubchapterNum == subChapterNum).ToList();
@@ -63,6 +62,19 @@ namespace BiochemSite.Controllers
                 return NotFound();
             }
             return Ok(subchapterSQ);
+        }
+
+        // Use: status question based on id
+        [HttpGet("{questionId}")]
+        public ActionResult<StatusQuestionDto> GetSQBasedOnId(int questionId)
+        {
+            var statusQuestion = StatusQuestionStore.Instance.StatusQuestions.FirstOrDefault(SQ => SQ.Id == questionId);
+            if (statusQuestion == null)
+            {
+                return NotFound();
+
+            }
+            return Ok(statusQuestion);
         }
 
     }
