@@ -14,7 +14,7 @@
 
         public string CorrectOption { get; set; } = string.Empty;
 
-        public SQExplanationDto? Explanation { get; set; }
+        public ExplanationDto Explanation { get; set; } = new ExplanationDto();
 
         public string? ImageURL { get; set; }    
 
