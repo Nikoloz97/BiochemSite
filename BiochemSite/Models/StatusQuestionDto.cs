@@ -6,8 +6,16 @@
         public int ChapterNum { get; set; }
         public int SubchapterNum { get; set; }
         public string Prompt { get; set; } = string.Empty;
-        public AnswerOptionsDto AnswerOptions { get; set; } = new AnswerOptionsDto();
-        public string Explanation { get; set; } = string.Empty;
+
+        public string OptionOne { get; set; } = string.Empty;
+        public string OptionTwo { get; set; } = string.Empty;
+        public string OptionThree { get; set; } = string.Empty;
+        public string OptionFour { get; set; } = string.Empty;
+
+        public string CorrectOption { get; set; } = string.Empty;
+
+        public SQExplanationDto? Explanation { get; set; }
+
         public string? ImageURL { get; set; }    
 
     }
