@@ -1,4 +1,4 @@
-﻿namespace BiochemSite.Models
+﻿namespace BiochemSite.Models.Flashcard
 {
     public class FlashcardDto
     {

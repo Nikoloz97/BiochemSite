@@ -1,4 +1,4 @@
-﻿using BiochemSite.Models;
+﻿using BiochemSite.Models.Flashcard;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BiochemSite

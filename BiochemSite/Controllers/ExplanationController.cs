@@ -1,4 +1,4 @@
-﻿using BiochemSite.Models;
+﻿using BiochemSite.Models.Explanation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 

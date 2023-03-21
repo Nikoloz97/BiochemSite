@@ -1,4 +1,6 @@
-﻿namespace BiochemSite.Models
+﻿using BiochemSite.Models.Explanation;
+
+namespace BiochemSite.Models.StatusQuestion
 {
     public class StatusQuestionDto
     {
@@ -16,7 +18,7 @@
 
         public ExplanationDto Explanation { get; set; } = new ExplanationDto();
 
-        public string? ImageURL { get; set; }    
+        public string? ImageURL { get; set; }
 
     }
 }

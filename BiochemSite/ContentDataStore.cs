@@ -1,4 +1,4 @@
-﻿using BiochemSite.Models;
+﻿using BiochemSite.Models.Content;
 
 namespace BiochemSite
 {

@@ -1,4 +1,4 @@
-﻿using BiochemSite.Models;
+﻿using BiochemSite.Models.StatusQuestion;
 
 namespace BiochemSite
 {
