@@ -1,6 +1,6 @@
 ﻿namespace BiochemSite.Models.Content
 {
-    public class ContentForCreationDto
+    public class SubchapterDto
     {
     }
 }

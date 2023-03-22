@@ -16,7 +16,7 @@ namespace BiochemSite.Controllers
         }
 
         // Get content for a chapter
-        [HttpGet("{chapterNum}")]
+        [HttpGet("{chapterNum}", Name = "GetChapter")]
         public ActionResult<IEnumerable<ContentDto>> GetChapterContent(int chapterNum)
         {
             var chapterContent = ContentDataStore.Instance.Contents.Where(c => c.ChapterNum == chapterNum);
@@ -38,9 +38,9 @@ namespace BiochemSite.Controllers
         }
 
 
-        // Add a chapter (admin)
-        [HttpPost("{chapterNum}")]
-        public ActionResult<ContentDto> CreateChapterContent (int chapterNum, ContentForCreationDto chapterToAdd)
+        // Create a chapter (admin)
+        [HttpPost]
+        public ActionResult<ContentDto> CreateChapterContent (ContentForCreationDto chapterToAdd)
         {
             var maxContentId = ContentDataStore.Instance.Contents.Max(c => c.Id);
 
@@ -49,49 +49,54 @@ namespace BiochemSite.Controllers
             {
                 Id = ++maxContentId,
                 ChapterNum = chapterToAdd.ChapterNum,
-                SubChapterNum = chapterToAdd.SubChapterNum
+                SubChapterNum = chapterToAdd.SubChapterNum,
+                ChapDesc = chapterToAdd.ChapDesc
             };
 
             ContentDataStore.Instance.Contents.Add(newChapter);
 
-            return Ok();
+            return CreatedAtRoute("GetChapter",
+                new
+                {
+                    chapterNum = chapterToAdd.ChapterNum,
+                },
+                newChapter
+                );
         }
 
 
-
-
-
-
-
-        // Add a subchapter (admin)
-        [HttpPost("{chapterNum}/{subChapterNum}")]
-        public ActionResult<ContentDto> CreateSubchapterContent(int chapterNum, int subchapterNum)
+        // Create a subchapter (admin)
+        [HttpPost("{chapterNum}")]
+        public ActionResult<ContentDto> CreateSubchapterContent(int chapterNum, ContentForCreationDto chapterToAdd)
         {
             return Ok();
         }
 
-        // Editing a chapter (admin)
+
+
+
+        // Edit a chapter (admin)
         [HttpPatch("{chapterNum}")]
         public ActionResult<ContentDto> EditChapterContent(int chapterNum)
         {
             return Ok();
         }
 
-        // Editing a subchapter (admin)
+        // Edit a subchapter (admin)
         [HttpPatch("{chapterNum}/{subChapterNum}")]
         public ActionResult<ContentDto> EditSubchapterContent(int chapterNum, int subchapterNum)
         {
             return Ok();
         }
 
-        // Deleting a chapter (admin) 
+        // Delete a chapter (admin) 
         [HttpDelete("{chapterNum}")]
         public ActionResult<ContentDto> DeleteSubchapterContent(int chapterNum)
         {
             return Ok();
         }
 
-        // Deleting a subchapter (admin) 
+        // Delete a subchapter (admin) 
         [HttpDelete("{chapterNum}/{subChapterNum}")]
         public ActionResult<ContentDto> DeleteSubchapterContent(int chapterNum, int subchapterNum)
         {
