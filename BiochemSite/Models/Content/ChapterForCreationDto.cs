@@ -1,11 +1,18 @@
-﻿namespace BiochemSite.Models.Content
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace BiochemSite.Models.Content
 {
     
-    public class ContentForCreationDto
+    public class ChapterForCreationDto
     {
-        public int ChapterNum { get; set; }
-        public int? SubChapterNum { get; set; }
-        public string? ChapDesc { get; set; }
+    
+        public int Number { get; set; }
+
+
+        public string Title { get; set; } = string.Empty;   
+
+
+        public List<SubchapterDto> Subchapters { get; set; } = new List<SubchapterDto>();
 
     }
 }
