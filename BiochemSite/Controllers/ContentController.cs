@@ -1,4 +1,5 @@
 ﻿using BiochemSite.Models.Content;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BiochemSite.Controllers
@@ -154,19 +155,93 @@ namespace BiochemSite.Controllers
 
 
 
-        // Edit a chapter (admin)
+        // Partially edit a chapter (admin)
         [HttpPatch("{chapterNum}")]
-        public ActionResult<ChapterDto> EditChapterContent(int chapterNum)
+        public ActionResult<ChapterDto> EditChapterContent(int chapterNum, JsonPatchDocument<ChapterForUpdateDto> patchDocument)
         {
-            return Ok();
+            // 1. Find the chapter
+            var chapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => c.Number == chapterNum);
+
+            if (chapter == null)
+            {
+                return NotFound();
+            }
+
+            // 2. Map chapter properties -> chapterForUpdateDto
+            var chapterToPatch =
+               new ChapterForUpdateDto()
+               {
+                   Number = chapter.Number,
+                   Title = chapter.Title,
+                   Subchapters = chapter.Subchapters,
+               };
+
+            // 3. Apply that mapped variable to patchdoc (see body of patch request in postman)
+            patchDocument.ApplyTo(chapterToPatch, ModelState);
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            // 4. Change chapter variable's properties from store with the patched version
+            chapter.Title = chapterToPatch.Title;
+            chapter.Number = chapterToPatch.Number;
+            chapter.Subchapters = chapterToPatch.Subchapters;
+
+            return NoContent();
         }
 
-        // Edit a subchapter (admin)
+        // Partially edit a subchapter (admin)
         [HttpPatch("{chapterNum}/{subChapterNum}")]
-        public ActionResult<ChapterDto> EditSubchapterContent(int chapterNum, int subchapterNum)
+        public ActionResult<ChapterDto> EditSubchapterContent(int chapterNum, int subchapterNum, JsonPatchDocument<SubchapterForUpdateDto> patchDocument)
         {
-            return Ok();
+            var correspondingChapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => c.Number == chapterNum);
+            if (correspondingChapter == null)
+            {
+                return NotFound();
+            }
+
+            var subchapter = correspondingChapter.Subchapters.FirstOrDefault(c => c.Number == subchapterNum);
+            if (subchapter == null)
+            {
+                return NotFound();
+            }
+
+            var subchapterToPatch =
+                new SubchapterForUpdateDto()
+                {
+                    Number = subchapter.Number,
+                    Title = subchapter.Title,
+                    Paragraphs = subchapter.Paragraphs,
+                };
+
+            patchDocument.ApplyTo(subchapterToPatch, ModelState);
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            subchapter.Title  = subchapterToPatch.Title;
+            subchapter.Number = subchapterToPatch.Number;
+            subchapter.Paragraphs = subchapterToPatch.Paragraphs;
+
+            return NoContent();
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         // Delete a chapter (admin) 
         [HttpDelete("{chapterNum}")]
