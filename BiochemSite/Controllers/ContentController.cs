@@ -1,4 +1,5 @@
-﻿using BiochemSite.Models.Content;
+﻿using BiochemSite.DataStores;
+using BiochemSite.Models.Content;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 
@@ -176,7 +177,8 @@ namespace BiochemSite.Controllers
                    Subchapters = chapter.Subchapters,
                };
 
-            // 3. Apply that mapped variable to patchdoc (see body of patch request in postman)
+            // 3. Apply that mapped variable to patchdoc (see body of patch request in postman -> "path" value = matches for property"
+                    // ModelState = allows to return message in case something goes wrong
             patchDocument.ApplyTo(chapterToPatch, ModelState);
 
             if (!ModelState.IsValid)
@@ -247,6 +249,7 @@ namespace BiochemSite.Controllers
         [HttpDelete("{chapterNum}")]
         public ActionResult<ChapterDto> DeleteSubchapterContent(int chapterNum)
         {
+            //var chapter = ContentDataStore.Instance.
             return Ok();
         }
 

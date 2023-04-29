@@ -5,7 +5,6 @@ namespace BiochemSite.Models.Content
     public class SubchapterForCreationDto
     {
         [Required]
-        [MaxLength(50)]
         public int Number { get; set; }
 
         [MaxLength(50)]

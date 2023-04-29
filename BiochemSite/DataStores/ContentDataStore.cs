@@ -1,6 +1,6 @@
 ﻿using BiochemSite.Models.Content;
 
-namespace BiochemSite
+namespace BiochemSite.DataStores
 {
     public class ContentDataStore
     {

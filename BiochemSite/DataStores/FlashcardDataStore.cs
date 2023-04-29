@@ -1,11 +1,11 @@
 ﻿using BiochemSite.Models.Flashcard;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BiochemSite
+namespace BiochemSite.DataStores
 {
-    public class FlashcardDataStore 
+    public class FlashcardDataStore
     {
-        public List<FlashcardDto> Flashcards { get; set; }  
+        public List<FlashcardDto> Flashcards { get; set; }
         public static FlashcardDataStore Instance { get; } = new FlashcardDataStore();
         public FlashcardDataStore()
         {
