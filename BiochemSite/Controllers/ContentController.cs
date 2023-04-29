@@ -9,6 +9,17 @@ namespace BiochemSite.Controllers
     [Route("api/[controller]")]
     public class ContentController : ControllerBase
     {
+        private readonly ILogger<ContentController> _logger;
+
+        public ContentController(ILogger<ContentController> logger)
+        {
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
+
+
+
+
         // Get all content
         [HttpGet]
         public ActionResult<IEnumerable<ChapterDto>> GetAllContent()
@@ -22,6 +33,12 @@ namespace BiochemSite.Controllers
         public ActionResult<IEnumerable<ChapterDto>> GetChapterContent(int chapterNum)
         {
             var chapterContent = ContentDataStore.Instance.Contents.Where(c => c.Number == chapterNum);
+
+            if (chapterContent == null)
+            {
+                _logger.LogInformation($"Chapter with number {chapterNum} wasn't found when accessing chapters");
+                return NotFound();
+            }
 
             return Ok(chapterContent);
         }
@@ -75,7 +92,7 @@ namespace BiochemSite.Controllers
 
 
         // Create a subchapter (admin)
-        [HttpPost("{chapterNum}")]
+        [HttpPost("{chapterNum}", Name = "CreateSubchapter")]
         public ActionResult<SubchapterDto> CreateSubchapterContent(int chapterNum, SubchapterForCreationDto chapterToAdd)
         {
             var CorrespondingChapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => (c.Number == chapterNum));
@@ -109,7 +126,7 @@ namespace BiochemSite.Controllers
         }
 
         // Edit a chapter (admin)
-        [HttpPut("{chapterNum}")]
+        [HttpPut("{chapterNum}", Name = "EditChapter")]
         public ActionResult UpdateChapterContent(int chapterNum, ChapterForUpdateDto updatedChapter)
         {
             var chapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => c.Number == chapterNum);
@@ -127,7 +144,7 @@ namespace BiochemSite.Controllers
         }
 
         // Edit a subchapter (admin)
-        [HttpPut("{chapterNum}/{subchapterNum}")]
+        [HttpPut("{chapterNum}/{subchapterNum}", Name = "EditSubchapter")]
         public ActionResult UpdateSubchapterContent(int chapterNum, int subchapterNum, SubchapterForUpdateDto updatedChapter)
         {
             var correspondingChapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => (c.Number == chapterNum));
@@ -157,7 +174,7 @@ namespace BiochemSite.Controllers
 
 
         // Partially edit a chapter (admin)
-        [HttpPatch("{chapterNum}")]
+        [HttpPatch("{chapterNum}", Name = "PartiallyEditChapter")]
         public ActionResult<ChapterDto> EditChapterContent(int chapterNum, JsonPatchDocument<ChapterForUpdateDto> patchDocument)
         {
             // 1. Find the chapter
@@ -195,7 +212,7 @@ namespace BiochemSite.Controllers
         }
 
         // Partially edit a subchapter (admin)
-        [HttpPatch("{chapterNum}/{subChapterNum}")]
+        [HttpPatch("{chapterNum}/{subChapterNum}", Name ="PartiallyEditSubchapter")]
         public ActionResult<ChapterDto> EditSubchapterContent(int chapterNum, int subchapterNum, JsonPatchDocument<SubchapterForUpdateDto> patchDocument)
         {
             var correspondingChapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => c.Number == chapterNum);
@@ -240,13 +257,8 @@ namespace BiochemSite.Controllers
 
 
 
-
-
-
-
-
         // Delete a chapter (admin) 
-        [HttpDelete("{chapterNum}")]
+        [HttpDelete("{chapterNum}", Name = "DeleteChapter")]
         public ActionResult<ChapterDto> DeleteSubchapterContent(int chapterNum)
         {
             var chapter = ContentDataStore.Instance.Contents.FirstOrDefault(chap => chap.Number == chapterNum);
@@ -261,7 +273,7 @@ namespace BiochemSite.Controllers
         }
 
         // Delete a subchapter (admin) 
-        [HttpDelete("{chapterNum}/{subChapterNum}")]
+        [HttpDelete("{chapterNum}/{subChapterNum}", Name = "DeleteSubchapter")]
         public ActionResult<ChapterDto> DeleteSubchapterContent(int chapterNum, int subchapterNum)
         {
             var chapter = ContentDataStore.Instance.Contents.FirstOrDefault(chap => chap.Number == chapterNum);
