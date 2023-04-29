@@ -32,11 +32,11 @@ namespace BiochemSite.Controllers
         [HttpGet("{chapterNum}", Name = "GetChapter")]
         public ActionResult<IEnumerable<ChapterDto>> GetChapterContent(int chapterNum)
         {
-            var chapterContent = ContentDataStore.Instance.Contents.Where(c => c.Number == chapterNum);
+            var chapterContent = ContentDataStore.Instance.Contents.FirstOrDefault(c => c.Number == chapterNum);
 
             if (chapterContent == null)
             {
-                _logger.LogInformation($"Chapter with number {chapterNum} wasn't found when accessing chapters");
+                _logger.LogInformation($"Chapter number {chapterNum} wasn't found when accessing chapters");
                 return NotFound();
             }
 
@@ -51,6 +51,7 @@ namespace BiochemSite.Controllers
 
             if (correctChapter == null)
             {
+                _logger.LogInformation($"Chapter number {chapterNum} wasn't found when accessing chapters");
                 return NotFound();
             }
 
@@ -58,6 +59,7 @@ namespace BiochemSite.Controllers
 
             if (subchapterContent == null)
             {
+                _logger.LogInformation($"Subchapter number {subchapterNum} wasn't found when accessing subchapters for Chapter number {chapterNum}");
                 return NotFound();
             }
 
@@ -99,6 +101,7 @@ namespace BiochemSite.Controllers
 
             if (CorrespondingChapter == null)
             {
+                _logger.LogInformation($"Chapter number {chapterNum} wasn't found when accessing subchapters");
                 return NotFound();
             }
 
@@ -133,6 +136,7 @@ namespace BiochemSite.Controllers
 
             if (chapter == null)
             {
+                _logger.LogInformation($"Chapter number {chapterNum} wasn't found when accessing subchapters");
                 return NotFound();
             }
 
@@ -151,6 +155,7 @@ namespace BiochemSite.Controllers
 
             if (correspondingChapter == null)
             {
+                _logger.LogInformation($"Chapter number {subchapterNum} wasn't found when accessing subchapters");
                 return NotFound();
             }
 
@@ -158,6 +163,7 @@ namespace BiochemSite.Controllers
 
             if (subchapter == null)
             {
+                _logger.LogInformation($"Subchapter number {subchapterNum} wasn't found when accessing subchapters for Chapter number {chapterNum}");
                 return NotFound();
             }
 
@@ -182,6 +188,7 @@ namespace BiochemSite.Controllers
 
             if (chapter == null)
             {
+                _logger.LogInformation($"Chapter number {chapterNum} wasn't found when accessing subchapters for Chapter");
                 return NotFound();
             }
 
@@ -218,12 +225,14 @@ namespace BiochemSite.Controllers
             var correspondingChapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => c.Number == chapterNum);
             if (correspondingChapter == null)
             {
+                _logger.LogInformation($"Chapter number {chapterNum} wasn't found when accessing subchapters");
                 return NotFound();
             }
 
             var subchapter = correspondingChapter.Subchapters.FirstOrDefault(c => c.Number == subchapterNum);
             if (subchapter == null)
             {
+                _logger.LogInformation($"Subchapter number {subchapterNum} wasn't found when accessing subchapters for Chapter number {chapterNum}");
                 return NotFound();
             }
 
@@ -264,6 +273,7 @@ namespace BiochemSite.Controllers
             var chapter = ContentDataStore.Instance.Contents.FirstOrDefault(chap => chap.Number == chapterNum);
             if (chapter == null)
             {
+                _logger.LogInformation($"Chapter number  {chapterNum}  wasn't found when accessing subchapters");
                 return NotFound();
             }
 
@@ -279,13 +289,15 @@ namespace BiochemSite.Controllers
             var chapter = ContentDataStore.Instance.Contents.FirstOrDefault(chap => chap.Number == chapterNum);
             if (chapter == null)
             {
+                _logger.LogInformation($"Chapter number  {chapterNum}  wasn't found when accessing subchapters");
                 return NotFound();
             }
 
             var subchapter = chapter.Subchapters.FirstOrDefault(subchap => subchap.Number == subchapterNum);
 
             if (subchapter == null) 
-            { 
+            {
+                _logger.LogInformation($"Subchapter number {subchapterNum} wasn't found when accessing subchapters for Chapter number {chapterNum}");
                 return NotFound(); 
             }
 
