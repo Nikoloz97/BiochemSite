@@ -249,15 +249,37 @@ namespace BiochemSite.Controllers
         [HttpDelete("{chapterNum}")]
         public ActionResult<ChapterDto> DeleteSubchapterContent(int chapterNum)
         {
-            //var chapter = ContentDataStore.Instance.
-            return Ok();
+            var chapter = ContentDataStore.Instance.Contents.FirstOrDefault(chap => chap.Number == chapterNum);
+            if (chapter == null)
+            {
+                return NotFound();
+            }
+
+            ContentDataStore.Instance.Contents.Remove(chapter);
+
+            return NoContent();
         }
 
         // Delete a subchapter (admin) 
         [HttpDelete("{chapterNum}/{subChapterNum}")]
         public ActionResult<ChapterDto> DeleteSubchapterContent(int chapterNum, int subchapterNum)
         {
-            return Ok();
+            var chapter = ContentDataStore.Instance.Contents.FirstOrDefault(chap => chap.Number == chapterNum);
+            if (chapter == null)
+            {
+                return NotFound();
+            }
+
+            var subchapter = chapter.Subchapters.FirstOrDefault(subchap => subchap.Number == subchapterNum);
+
+            if (subchapter == null) 
+            { 
+                return NotFound(); 
+            }
+
+            chapter.Subchapters.Remove(subchapter);
+            
+            return NoContent();
         }
 
     }
