@@ -32,21 +32,39 @@ namespace BiochemSite.Controllers
         [HttpGet("{chapterNum}", Name = "GetChapter")]
         public ActionResult<IEnumerable<ChapterDto>> GetChapterContent(int chapterNum)
         {
-            var chapterContent = ContentDataStore.Instance.Contents.FirstOrDefault(c => c.Number == chapterNum);
-
-            if (chapterContent == null)
+            try
             {
-                _logger.LogInformation($"Chapter number {chapterNum} wasn't found when accessing chapters");
-                return NotFound();
+
+                var chapterContent = ContentDataStore.Instance.Contents.FirstOrDefault(c => c.Number == chapterNum);
+
+                if (chapterContent == null) 
+                {
+                    _logger.LogInformation($"Chapter number {chapterNum} wasn't found when accessing chapters");
+                    return NotFound();
+                }
+
+                return Ok(chapterContent);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical($"Exception occured while getting chapter number {chapterNum}", ex);
+
+                // Be vague here (don't want hackers to get any ideas...) 
+                return StatusCode(500, "A problem occured while handling your request. Sorry!");
             }
 
-            return Ok(chapterContent);
+           
         }
 
         // Content for a subchapter
         [HttpGet("{chapterNum}/{subChapterNum}", Name = "GetSubchapter")]
         public ActionResult<ChapterDto> GetSubchapterContent(int chapterNum, int subchapterNum)
         {
+
+            try
+            {
+
             var correctChapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => (c.Number == chapterNum));
 
             if (correctChapter == null)
@@ -64,6 +82,16 @@ namespace BiochemSite.Controllers
             }
 
             return Ok(subchapterContent);
+
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical($"Exception occured while getting a subchapter for chapter {chapterNum}", ex);
+
+                return StatusCode(500, "A problem occured while handling your request. Sorry!");
+            }
+
         }
 
 
@@ -71,6 +99,8 @@ namespace BiochemSite.Controllers
         [HttpPost]
         public ActionResult<ChapterDto> CreateChapterContent (ChapterForCreationDto chapterToAdd)
         {
+            try
+            {
             var maxChapterId = ContentDataStore.Instance.Contents.Max(c => c.Id);
 
             var newChapter = new ChapterDto()
@@ -90,6 +120,14 @@ namespace BiochemSite.Controllers
                 },
                 newChapter
                 );
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical("Exception occured while trying to add a chapter", ex);
+
+                return StatusCode(500, "A problem occured while handling your request");
+            }
         }
 
 
@@ -97,6 +135,8 @@ namespace BiochemSite.Controllers
         [HttpPost("{chapterNum}", Name = "CreateSubchapter")]
         public ActionResult<SubchapterDto> CreateSubchapterContent(int chapterNum, SubchapterForCreationDto chapterToAdd)
         {
+            try
+            {
             var CorrespondingChapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => (c.Number == chapterNum));
 
             if (CorrespondingChapter == null)
@@ -126,12 +166,23 @@ namespace BiochemSite.Controllers
                 },
                 newSubchapter
                 );
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical($"A problem occured while creating a subchapter for chapter {chapterNum}", ex);
+                return StatusCode(500, "A problem occured while handling your request");
+            }
+
         }
 
         // Edit a chapter (admin)
         [HttpPut("{chapterNum}", Name = "EditChapter")]
         public ActionResult UpdateChapterContent(int chapterNum, ChapterForUpdateDto updatedChapter)
         {
+
+            try
+            {
             var chapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => c.Number == chapterNum);
 
             if (chapter == null)
@@ -145,12 +196,22 @@ namespace BiochemSite.Controllers
             chapter.Subchapters = updatedChapter.Subchapters;
 
             return NoContent();
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical($"An exception occured while trying to edit the chapter for chapter number {chapterNum}", ex);
+                return StatusCode(500, "An exception occured while handling your request");
+            }
         }
 
         // Edit a subchapter (admin)
         [HttpPut("{chapterNum}/{subchapterNum}", Name = "EditSubchapter")]
         public ActionResult UpdateSubchapterContent(int chapterNum, int subchapterNum, SubchapterForUpdateDto updatedChapter)
         {
+
+            try
+            {
             var correspondingChapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => (c.Number == chapterNum));
 
             if (correspondingChapter == null)
@@ -172,6 +233,15 @@ namespace BiochemSite.Controllers
             subchapter.Paragraphs = updatedChapter.Paragraphs;
 
             return NoContent();
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical($"An exception occured while trying to edit subchapter {subchapterNum} for chapter {chapterNum}", ex);
+                return StatusCode(500, "An error occured while processing your request");
+            }
+
+
         }
 
 
@@ -183,6 +253,9 @@ namespace BiochemSite.Controllers
         [HttpPatch("{chapterNum}", Name = "PartiallyEditChapter")]
         public ActionResult<ChapterDto> EditChapterContent(int chapterNum, JsonPatchDocument<ChapterForUpdateDto> patchDocument)
         {
+            try
+            {
+
             // 1. Find the chapter
             var chapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => c.Number == chapterNum);
 
@@ -201,8 +274,8 @@ namespace BiochemSite.Controllers
                    Subchapters = chapter.Subchapters,
                };
 
-            // 3. Apply that mapped variable to patchdoc (see body of patch request in postman -> "path" value = matches for property"
-                    // ModelState = allows to return message in case something goes wrong
+            // 3. Apply that mapped variable to patchdoc (see body of patch request on postman -> there, "path" = automatically matches for property"
+                    // ModelState = returns message in case something goes wrong
             patchDocument.ApplyTo(chapterToPatch, ModelState);
 
             if (!ModelState.IsValid)
@@ -210,18 +283,28 @@ namespace BiochemSite.Controllers
                 return BadRequest(ModelState);
             }
 
-            // 4. Change chapter variable's properties from store with the patched version
+            // 4. Change chapter variable's properties from store -> patched version
             chapter.Title = chapterToPatch.Title;
             chapter.Number = chapterToPatch.Number;
             chapter.Subchapters = chapterToPatch.Subchapters;
 
             return NoContent();
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical($"An exception occured while trying to partially edit chapter {chapterNum}", ex);
+                return StatusCode(500, "An exception occured while processing your request");
+            }
+
         }
 
         // Partially edit a subchapter (admin)
         [HttpPatch("{chapterNum}/{subChapterNum}", Name ="PartiallyEditSubchapter")]
         public ActionResult<ChapterDto> EditSubchapterContent(int chapterNum, int subchapterNum, JsonPatchDocument<SubchapterForUpdateDto> patchDocument)
         {
+            try
+            {
             var correspondingChapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => c.Number == chapterNum);
             if (correspondingChapter == null)
             {
@@ -256,6 +339,14 @@ namespace BiochemSite.Controllers
             subchapter.Paragraphs = subchapterToPatch.Paragraphs;
 
             return NoContent();
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical($"An exception occured while trying to partially edit subchapter {subchapterNum} for chapter {chapterNum}", ex);
+                return StatusCode(500, "An error occured while trying to process your request");
+            }
+
         }
 
 
@@ -270,6 +361,9 @@ namespace BiochemSite.Controllers
         [HttpDelete("{chapterNum}", Name = "DeleteChapter")]
         public ActionResult<ChapterDto> DeleteSubchapterContent(int chapterNum)
         {
+            try
+            {
+
             var chapter = ContentDataStore.Instance.Contents.FirstOrDefault(chap => chap.Number == chapterNum);
             if (chapter == null)
             {
@@ -280,12 +374,21 @@ namespace BiochemSite.Controllers
             ContentDataStore.Instance.Contents.Remove(chapter);
 
             return NoContent();
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical($"An exception occured while trying to delete chapter {chapterNum}", ex);
+                return StatusCode(500, "An error occured when trying to process your request");
+            }
         }
 
         // Delete a subchapter (admin) 
         [HttpDelete("{chapterNum}/{subChapterNum}", Name = "DeleteSubchapter")]
         public ActionResult<ChapterDto> DeleteSubchapterContent(int chapterNum, int subchapterNum)
         {
+            try
+            {
             var chapter = ContentDataStore.Instance.Contents.FirstOrDefault(chap => chap.Number == chapterNum);
             if (chapter == null)
             {
@@ -304,6 +407,14 @@ namespace BiochemSite.Controllers
             chapter.Subchapters.Remove(subchapter);
             
             return NoContent();
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical($"An exception occured when trying to delete subchapter {subchapterNum} for chapter {chapterNum}", ex);
+                return StatusCode(500, "An error occured while trying to process your request");
+            }
+
         }
 
     }
