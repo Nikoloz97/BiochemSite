@@ -1,5 +1,6 @@
 ﻿using BiochemSite.DataStores;
 using BiochemSite.Models.Content;
+using BiochemSite.Services;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,22 +11,29 @@ namespace BiochemSite.Controllers
     public class ContentController : ControllerBase
     {
         private readonly ILogger<ContentController> _logger;
+        private readonly MailService _mailService;
 
-        public ContentController(ILogger<ContentController> logger)
+        public ContentController(ILogger<ContentController> logger, MailService mailService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _mailService = mailService ?? throw new ArgumentNullException(nameof(mailService));
         }
-
-
-
-
 
         // Get all content
         [HttpGet]
         public ActionResult<IEnumerable<ChapterDto>> GetAllContent()
         {
+            try
+            {
             var allContent = ContentDataStore.Instance.Contents;
             return Ok(allContent);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical("An exception occured when trying to get all chapter content", ex);
+                return StatusCode(500, "An error occured when trying to process your request");
+            }
         }
 
         // Get content for a chapter
@@ -48,7 +56,7 @@ namespace BiochemSite.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogCritical($"Exception occured while getting chapter number {chapterNum}", ex);
+                _logger.LogCritical($"An exception occured while getting chapter number {chapterNum}", ex);
 
                 // Be vague here (don't want hackers to get any ideas...) 
                 return StatusCode(500, "A problem occured while handling your request. Sorry!");
@@ -87,7 +95,7 @@ namespace BiochemSite.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogCritical($"Exception occured while getting a subchapter for chapter {chapterNum}", ex);
+                _logger.LogCritical($"An exception occured while trying to get subchapter {subchapterNum} for chapter {chapterNum}", ex);
 
                 return StatusCode(500, "A problem occured while handling your request. Sorry!");
             }
@@ -101,19 +109,23 @@ namespace BiochemSite.Controllers
         {
             try
             {
-            var maxChapterId = ContentDataStore.Instance.Contents.Max(c => c.Id);
+                var maxChapterId = ContentDataStore.Instance.Contents.Max(c => c.Id);
 
-            var newChapter = new ChapterDto()
-            {
-                Id = ++maxChapterId,
-                Number = chapterToAdd.Number,
-                Title = chapterToAdd.Title,
-                Subchapters = chapterToAdd.Subchapters,
-            };
+                var newChapter = new ChapterDto()
+                {
+                    Id = ++maxChapterId,
+                    Number = chapterToAdd.Number,
+                    Title = chapterToAdd.Title,
+                    Subchapters = chapterToAdd.Subchapters,
+                };
 
-            ContentDataStore.Instance.Contents.Add(newChapter);
+                ContentDataStore.Instance.Contents.Add(newChapter);
 
-            return CreatedAtRoute("GetChapter",
+                _mailService.Send("Chapter Created", $"Chapter titled {chapterToAdd.Title} was created from the store with the following subchapters: {chapterToAdd.Subchapters}");
+
+
+                // Referring to: get request's name, get request's parameters, and the mapped resource that was added
+                return CreatedAtRoute("GetChapter",
                 new
                 {
                     chapterNum = chapterToAdd.Number,
@@ -122,6 +134,7 @@ namespace BiochemSite.Controllers
                 );
 
             }
+
             catch (Exception ex)
             {
                 _logger.LogCritical("Exception occured while trying to add a chapter", ex);
@@ -133,44 +146,47 @@ namespace BiochemSite.Controllers
 
         // Create a subchapter (admin)
         [HttpPost("{chapterNum}", Name = "CreateSubchapter")]
-        public ActionResult<SubchapterDto> CreateSubchapterContent(int chapterNum, SubchapterForCreationDto chapterToAdd)
+        public ActionResult<SubchapterDto> CreateSubchapterContent(int chapterNum, SubchapterForCreationDto subchapterToAdd)
         {
             try
             {
-            var CorrespondingChapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => (c.Number == chapterNum));
+                var CorrespondingChapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => (c.Number == chapterNum));
 
-            if (CorrespondingChapter == null)
-            {
-                _logger.LogInformation($"Chapter number {chapterNum} wasn't found when accessing subchapters");
-                return NotFound();
-            }
-
-            var maxSubchapterId = CorrespondingChapter.Subchapters.Max(sc => sc.Id);
-
-            var newSubchapter = new SubchapterDto()
-            {
-                Id = ++maxSubchapterId,
-                Number = chapterToAdd.Number,
-                Title = chapterToAdd.Title,
-                Paragraphs = chapterToAdd.Paragraphs,
-            };
-
-            CorrespondingChapter.Subchapters.Add(newSubchapter);
-
-            // Referring to correpsonding get request's: name, parameters, and mapped resource 
-            return CreatedAtRoute("GetSubchapter",
-                new
+                if (CorrespondingChapter == null)
                 {
-                    chapterNum = chapterNum,
-                    subchapterNum = chapterToAdd.Number,
-                },
-                newSubchapter
-                );
+                    _logger.LogInformation($"Chapter number {chapterNum} wasn't found when accessing subchapters");
+                    return NotFound();
+                }
+
+                var maxSubchapterId = CorrespondingChapter.Subchapters.Max(sc => sc.Id);
+
+                var newSubchapter = new SubchapterDto()
+                {
+                    Id = ++maxSubchapterId,
+                    Number = subchapterToAdd.Number,
+                    Title = subchapterToAdd.Title,
+                    Paragraphs = subchapterToAdd.Paragraphs,
+                };
+
+                CorrespondingChapter.Subchapters.Add(newSubchapter);
+
+                _mailService.Send("Subchapter Created", $"Subchapter titled {subchapterToAdd.Title} was created for chapter {chapterNum}");
+
+                // Referring to: get request's name, get request's parameters, and the mapped resource that was added
+                return CreatedAtRoute("GetSubchapter",
+                    new
+                    {
+                        chapterNum = chapterNum,
+                        subchapterNum = subchapterToAdd.Number,
+                    },
+                    newSubchapter
+                    );
 
             }
             catch (Exception ex)
             {
                 _logger.LogCritical($"A problem occured while creating a subchapter for chapter {chapterNum}", ex);
+
                 return StatusCode(500, "A problem occured while handling your request");
             }
 
@@ -183,24 +199,29 @@ namespace BiochemSite.Controllers
 
             try
             {
-            var chapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => c.Number == chapterNum);
 
-            if (chapter == null)
-            {
-                _logger.LogInformation($"Chapter number {chapterNum} wasn't found when accessing subchapters");
-                return NotFound();
-            }
+                // Find chapter
+                var chapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => c.Number == chapterNum);
 
-            chapter.Number = updatedChapter.Number;
-            chapter.Title = updatedChapter.Title;
-            chapter.Subchapters = updatedChapter.Subchapters;
+                if (chapter == null)
+                {
+                    _logger.LogInformation($"Chapter number {chapterNum} wasn't found when accessing subchapters");
+                    return NotFound();
+                }
 
-            return NoContent();
+                // Map chapter
+                chapter.Number = updatedChapter.Number;
+                chapter.Title = updatedChapter.Title;
+                chapter.Subchapters = updatedChapter.Subchapters;
+
+                _mailService.Send("Chapter Edited", $"Chapter wih id {chapter.Id} was edited");
+
+                return NoContent();
 
             }
             catch (Exception ex)
             {
-                _logger.LogCritical($"An exception occured while trying to edit the chapter for chapter number {chapterNum}", ex);
+                _logger.LogCritical($"An exception occured while trying to edit chapter {chapterNum}", ex);
                 return StatusCode(500, "An exception occured while handling your request");
             }
         }
@@ -212,33 +233,37 @@ namespace BiochemSite.Controllers
 
             try
             {
-            var correspondingChapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => (c.Number == chapterNum));
+                var correspondingChapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => (c.Number == chapterNum));
 
-            if (correspondingChapter == null)
-            {
-                _logger.LogInformation($"Chapter number {subchapterNum} wasn't found when accessing subchapters");
-                return NotFound();
-            }
+                if (correspondingChapter == null)
+                {
+                    _logger.LogInformation($"Chapter number {subchapterNum} wasn't found when accessing subchapters");
+                    return NotFound();
+                }
 
-            var subchapter = correspondingChapter.Subchapters.FirstOrDefault(sc => (sc.Number == subchapterNum));
+                var subchapter = correspondingChapter.Subchapters.FirstOrDefault(sc => (sc.Number == subchapterNum));
 
-            if (subchapter == null)
-            {
-                _logger.LogInformation($"Subchapter number {subchapterNum} wasn't found when accessing subchapters for Chapter number {chapterNum}");
-                return NotFound();
-            }
 
-            subchapter.Number = updatedChapter.Number;
-            subchapter.Title = updatedChapter.Title;
-            subchapter.Paragraphs = updatedChapter.Paragraphs;
 
-            return NoContent();
+                if (subchapter == null)
+                {
+                    _logger.LogInformation($"Subchapter number {subchapterNum} wasn't found when accessing subchapters for Chapter number {chapterNum}");
+                    return NotFound();
+                }
+
+                subchapter.Number = updatedChapter.Number;
+                subchapter.Title = updatedChapter.Title;
+                subchapter.Paragraphs = updatedChapter.Paragraphs;
+
+                _mailService.Send("Subchapter Edited", $"Subchapter with id {subchapter.Id} was edited from Chapter {chapterNum}");
+
+                return NoContent();
 
             }
             catch (Exception ex)
             {
                 _logger.LogCritical($"An exception occured while trying to edit subchapter {subchapterNum} for chapter {chapterNum}", ex);
-                return StatusCode(500, "An error occured while processing your request");
+                return StatusCode(500, "An error occured while handling your request");
             }
 
 
@@ -256,39 +281,41 @@ namespace BiochemSite.Controllers
             try
             {
 
-            // 1. Find the chapter
-            var chapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => c.Number == chapterNum);
+                // 1. Find the chapter
+                var chapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => c.Number == chapterNum);
 
-            if (chapter == null)
-            {
-                _logger.LogInformation($"Chapter number {chapterNum} wasn't found when accessing subchapters for Chapter");
-                return NotFound();
-            }
+                if (chapter == null)
+                {
+                    _logger.LogInformation($"Chapter number {chapterNum} wasn't found when accessing subchapters for Chapter");
+                    return NotFound();
+                }
 
-            // 2. Map chapter properties -> chapterForUpdateDto
-            var chapterToPatch =
-               new ChapterForUpdateDto()
-               {
-                   Number = chapter.Number,
-                   Title = chapter.Title,
-                   Subchapters = chapter.Subchapters,
-               };
+                // 2. Map chapter properties -> chapterForUpdateDto
+                var chapterToPatch =
+                   new ChapterForUpdateDto()
+                   {
+                       Number = chapter.Number,
+                       Title = chapter.Title,
+                       Subchapters = chapter.Subchapters,
+                   };
 
-            // 3. Apply that mapped variable to patchdoc (see body of patch request on postman -> there, "path" = automatically matches for property"
-                    // ModelState = returns message in case something goes wrong
-            patchDocument.ApplyTo(chapterToPatch, ModelState);
+                // 3. Apply that mapped variable to patchdoc (see body of patch request on postman -> there, "path" = automatically matches for property"
+                        // ModelState = returns message in case something goes wrong
+                patchDocument.ApplyTo(chapterToPatch, ModelState);
 
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
 
-            // 4. Change chapter variable's properties from store -> patched version
-            chapter.Title = chapterToPatch.Title;
-            chapter.Number = chapterToPatch.Number;
-            chapter.Subchapters = chapterToPatch.Subchapters;
+                // 4. Change chapter variable's properties from store -> patched version
+                chapter.Title = chapterToPatch.Title;
+                chapter.Number = chapterToPatch.Number;
+                chapter.Subchapters = chapterToPatch.Subchapters;
 
-            return NoContent();
+                _mailService.Send("Chapter Updated", $"Chapter id {chapter.Id} was partially edited");
+
+                return NoContent();
 
             }
             catch (Exception ex)
@@ -305,40 +332,42 @@ namespace BiochemSite.Controllers
         {
             try
             {
-            var correspondingChapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => c.Number == chapterNum);
-            if (correspondingChapter == null)
-            {
-                _logger.LogInformation($"Chapter number {chapterNum} wasn't found when accessing subchapters");
-                return NotFound();
-            }
-
-            var subchapter = correspondingChapter.Subchapters.FirstOrDefault(c => c.Number == subchapterNum);
-            if (subchapter == null)
-            {
-                _logger.LogInformation($"Subchapter number {subchapterNum} wasn't found when accessing subchapters for Chapter number {chapterNum}");
-                return NotFound();
-            }
-
-            var subchapterToPatch =
-                new SubchapterForUpdateDto()
+                var correspondingChapter = ContentDataStore.Instance.Contents.FirstOrDefault(c => c.Number == chapterNum);
+                if (correspondingChapter == null)
                 {
-                    Number = subchapter.Number,
-                    Title = subchapter.Title,
-                    Paragraphs = subchapter.Paragraphs,
-                };
+                    _logger.LogInformation($"Chapter number {chapterNum} wasn't found when accessing subchapters");
+                    return NotFound();
+                }
 
-            patchDocument.ApplyTo(subchapterToPatch, ModelState);
+                var subchapter = correspondingChapter.Subchapters.FirstOrDefault(c => c.Number == subchapterNum);
+                if (subchapter == null)
+                {
+                    _logger.LogInformation($"Subchapter number {subchapterNum} wasn't found when accessing subchapters for Chapter number {chapterNum}");
+                    return NotFound();
+                }
 
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+                var subchapterToPatch =
+                    new SubchapterForUpdateDto()
+                    {
+                        Number = subchapter.Number,
+                        Title = subchapter.Title,
+                        Paragraphs = subchapter.Paragraphs,
+                    };
 
-            subchapter.Title  = subchapterToPatch.Title;
-            subchapter.Number = subchapterToPatch.Number;
-            subchapter.Paragraphs = subchapterToPatch.Paragraphs;
+                patchDocument.ApplyTo(subchapterToPatch, ModelState);
 
-            return NoContent();
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                subchapter.Title  = subchapterToPatch.Title;
+                subchapter.Number = subchapterToPatch.Number;
+                subchapter.Paragraphs = subchapterToPatch.Paragraphs;
+
+                _mailService.Send("Subchapter Edited", $"Subchapter id {subchapter.Id} from chapter {chapterNum} was partially edited");
+
+                return NoContent();
 
             }
             catch (Exception ex)
@@ -364,16 +393,18 @@ namespace BiochemSite.Controllers
             try
             {
 
-            var chapter = ContentDataStore.Instance.Contents.FirstOrDefault(chap => chap.Number == chapterNum);
-            if (chapter == null)
-            {
-                _logger.LogInformation($"Chapter number  {chapterNum}  wasn't found when accessing subchapters");
-                return NotFound();
-            }
+                var chapter = ContentDataStore.Instance.Contents.FirstOrDefault(chap => chap.Number == chapterNum);
+                if (chapter == null)
+                {
+                    _logger.LogInformation($"Chapter number  {chapterNum}  wasn't found when accessing subchapters");
+                    return NotFound();
+                }
 
-            ContentDataStore.Instance.Contents.Remove(chapter);
+                ContentDataStore.Instance.Contents.Remove(chapter);
 
-            return NoContent();
+                _mailService.Send("Chapter Deleted", $"Chapter with id {chapter.Id} and title {chapter.Title} was deleted");
+
+                return NoContent();
 
             }
             catch (Exception ex)
@@ -389,24 +420,26 @@ namespace BiochemSite.Controllers
         {
             try
             {
-            var chapter = ContentDataStore.Instance.Contents.FirstOrDefault(chap => chap.Number == chapterNum);
-            if (chapter == null)
-            {
-                _logger.LogInformation($"Chapter number  {chapterNum}  wasn't found when accessing subchapters");
-                return NotFound();
-            }
+                var chapter = ContentDataStore.Instance.Contents.FirstOrDefault(chap => chap.Number == chapterNum);
+                if (chapter == null)
+                {
+                    _logger.LogInformation($"Chapter number  {chapterNum}  wasn't found when accessing subchapters");
+                    return NotFound();
+                }
 
-            var subchapter = chapter.Subchapters.FirstOrDefault(subchap => subchap.Number == subchapterNum);
+                var subchapter = chapter.Subchapters.FirstOrDefault(subchap => subchap.Number == subchapterNum);
 
-            if (subchapter == null) 
-            {
-                _logger.LogInformation($"Subchapter number {subchapterNum} wasn't found when accessing subchapters for Chapter number {chapterNum}");
-                return NotFound(); 
-            }
+                if (subchapter == null) 
+                {
+                    _logger.LogInformation($"Subchapter number {subchapterNum} wasn't found when accessing subchapters for Chapter number {chapterNum}");
+                    return NotFound(); 
+                }
 
-            chapter.Subchapters.Remove(subchapter);
-            
-            return NoContent();
+                chapter.Subchapters.Remove(subchapter);
+
+                _mailService.Send("Chapter Created", $"Subchapter with id {subchapter.Id} and title {subchapter.Title} was deleted from chapter {chapterNum}");
+
+                return NoContent();
 
             }
             catch (Exception ex)

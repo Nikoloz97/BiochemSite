@@ -1,6 +1,19 @@
+using BiochemSite.Services;
 using Microsoft.AspNetCore.StaticFiles;
+using Serilog;
+
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .WriteTo.Console()
+    .WriteTo.File("logs/BiochemSite.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+builder.Host.UseSerilog();
 
 // Add services to the container.
 
@@ -14,6 +27,9 @@ builder.Services.AddSwaggerGen();
 
 // Allows for files (mp4, pdf, ppt) to be displayed after downloading
 builder.Services.AddSingleton<FileExtensionContentTypeProvider>();
+
+// Allows for mail service to be used 
+builder.Services.AddTransient<MailService>();
 
 var app = builder.Build();
 
